@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
 import os
-from advisor.face_parsing.onnx_inference import FaceParsingONNX
+from backend.app.core.advisor.face_parsing.onnx_inference import FaceParsingONNX
 
 model_path = os.path.join("advisor", "face_parsing", "weights", "resnet18.onnx")
 

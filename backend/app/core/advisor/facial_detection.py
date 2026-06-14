@@ -3,8 +3,8 @@ import onnx
 import os
 import numpy as np
 
-from advisor.face_parsing.utils.common import vis_parsing_maps
-from advisor.face_parsing.onnx_inference import FaceParsingONNX
+from core.advisor.face_parsing.utils.common import vis_parsing_maps
+from core.advisor.face_parsing.onnx_inference import FaceParsingONNX
 class FacialDetector:
     def __init__(self, model_name: str):
         self.model_name = model_name

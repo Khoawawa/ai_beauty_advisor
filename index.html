@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Beauty Advisor</title>
+<style>
+:root{
+  --cream:#FBF4EF;
+  --rose:#F6DCDA;
+  --rose-deep:#E8A6A0;
+  --coral:#E07A5F;
+  --plum:#5A4A52;
+  --ink:#3D3438;
+  --muted:#9B8A8F;
+  --line:#EFE2DC;
+  --gold:#D9A55E;
+  --sage:#A7B79A;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{
+  font-family:'Helvetica Neue',Arial,sans-serif;
+  background:var(--cream);
+  color:var(--ink);
+}
+.app{
+  display:flex;
+  min-height:100vh;
+}
+/* SIDEBAR */
+.sidebar{
+  width:230px;
+  background:#fff;
+  border-right:1px solid var(--line);
+  padding:28px 22px;
+  flex-shrink:0;
+}
+.logo{
+  font-family:Georgia,'Times New Roman',serif;
+  font-size:20px;
+  font-weight:600;
+  letter-spacing:0.5px;
+  margin-bottom:6px;
+}
+.logo span{color:var(--coral);}
+.tagline{
+  font-size:11px;
+  color:var(--muted);
+  margin-bottom:32px;
+  letter-spacing:0.5px;
+}
+.nav-section-title{
+  font-size:11px;
+  text-transform:uppercase;
+  letter-spacing:1.5px;
+  color:var(--muted);
+  margin:24px 0 12px;
+}
+.nav-item{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  padding:11px 12px;
+  border-radius:10px;
+  font-size:14px;
+  color:var(--plum);
+  cursor:pointer;
+  transition:background .15s;
+  margin-bottom:4px;
+}
+.nav-item .dot{
+  width:8px;height:8px;border-radius:50%;
+  background:var(--line);
+  flex-shrink:0;
+  transition:background .15s;
+}
+.nav-item:hover{background:var(--rose);}
+.nav-item.active{background:var(--rose);font-weight:600;}
+.nav-item.active .dot{background:var(--coral);}
+
+/* MAIN */
+.main{
+  flex:1;
+  padding:28px 36px;
+  max-width:1240px;
+}
+.topbar{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:28px;
+}
+.topbar h1{
+  font-family:Georgia,'Times New Roman',serif;
+  font-size:26px;
+  font-weight:600;
+}
+.topbar .sub{font-size:13px;color:var(--muted);margin-top:4px;}
+.avatar{
+  width:38px;height:38px;border-radius:50%;
+  background:linear-gradient(135deg,var(--rose-deep),var(--gold));
+}
+
+.page{display:none;}
+.page.active{display:block;}
+
+/* Cards */
+.card{
+  background:#fff;
+  border:1px solid var(--line);
+  border-radius:16px;
+  padding:24px;
+}
+.grid{display:grid;gap:20px;}
+
+/* ===== HOME PAGE ===== */
+.home-hero{
+  background:linear-gradient(135deg,#FCEEEA,#F6E3E8);
+  border-radius:20px;
+  padding:48px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  margin-bottom:28px;
+}
+.home-hero h2{
+  font-family:Georgia,serif;
+  font-size:36px;
+  line-height:1.25;
+  max-width:480px;
+}
+.home-hero h2 em{color:var(--coral);font-style:normal;border-bottom:3px solid var(--rose-deep);}
+.home-hero p{margin-top:14px;color:var(--plum);max-width:440px;font-size:15px;line-height:1.6;}
+.btn-primary{
+  margin-top:24px;
+  display:inline-block;
+  background:var(--coral);
+  color:#fff;
+  padding:14px 28px;
+  border-radius:999px;
+  font-size:14px;
+  font-weight:600;
+  border:none;
+  cursor:pointer;
+  letter-spacing:0.3px;
+}
+.btn-primary:hover{background:#cf6a50;}
+.btn-outline{
+  margin-top:24px;margin-left:12px;
+  display:inline-block;
+  background:transparent;
+  border:1.5px solid var(--coral);
+  color:var(--coral);
+  padding:13px 26px;
+  border-radius:999px;
+  font-size:14px;font-weight:600;
+  cursor:pointer;
+}
+.hero-circle{
+  width:220px;height:220px;border-radius:50%;
+  background:linear-gradient(135deg,var(--rose-deep),var(--gold));
+  flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  font-family:Georgia,serif;
+  color:#fff;font-size:15px;text-align:center;
+  box-shadow:0 20px 50px -10px rgba(224,122,95,0.5);
+}
+.steps-grid{grid-template-columns:repeat(3,1fr);}
+.step-card{
+  background:#fff;border:1px solid var(--line);border-radius:16px;padding:22px;
+}
+.step-num{
+  font-family:Georgia,serif;font-size:13px;color:var(--rose-deep);font-weight:700;letter-spacing:2px;
+}
+.step-card h3{font-size:16px;margin:10px 0 6px;font-weight:600;}
+.step-card p{font-size:13px;color:var(--muted);line-height:1.5;}
+
+/* ===== UPLOAD PAGE ===== */
+.upload-wrap{
+  display:flex;flex-direction:column;align-items:center;
+  text-align:center;
+  padding:50px 20px;
+}
+.upload-box{
+  width:100%;max-width:520px;
+  border:2px dashed var(--rose-deep);
+  border-radius:20px;
+  background:#FFF9F7;
+  padding:50px 30px;
+  cursor:pointer;
+  transition:border-color .15s,background .15s;
+}
+.upload-box:hover{border-color:var(--coral);background:#FEF1ED;}
+.upload-box.has-image{border-style:solid;padding:20px;}
+.upload-icon{
+  width:64px;height:64px;border-radius:50%;
+  background:var(--rose);
+  display:flex;align-items:center;justify-content:center;
+  margin:0 auto 18px;
+  font-size:26px;
+}
+.upload-box h3{font-size:16px;margin-bottom:6px;}
+.upload-box p{font-size:13px;color:var(--muted);}
+#previewImg{max-width:100%;max-height:320px;border-radius:14px;display:none;}
+.upload-tips{
+  margin-top:28px;max-width:520px;text-align:left;
+  background:#fff;border:1px solid var(--line);border-radius:14px;padding:18px 22px;
+}
+.upload-tips h4{font-size:13px;text-transform:uppercase;letter-spacing:1px;color:var(--rose-deep);margin-bottom:10px;}
+.upload-tips ul{list-style:none;font-size:13px;color:var(--plum);line-height:1.9;}
+.upload-tips li::before{content:"✓  ";color:var(--sage);font-weight:700;}
+.fileinput{display:none;}
+
+/* ===== ANALYSIS RESULT PAGE ===== */
+.analysis-layout{
+  display:grid;grid-template-columns:1.3fr 1fr;gap:22px;
+}
+.result-photo{
+  border-radius:16px;overflow:hidden;
+  position:relative;
+  background:#F3E4E0;
+  min-height:380px;
+  display:flex;align-items:center;justify-content:center;
+}
+.result-photo img{width:100%;height:100%;object-fit:cover;}
+.result-right{display:flex;flex-direction:column;gap:18px;}
+.tone-badge{
+  display:inline-flex;align-items:center;gap:8px;
+  background:var(--rose);color:var(--coral);
+  font-weight:700;font-size:13px;
+  padding:6px 14px;border-radius:999px;margin-bottom:10px;
+}
+.result-right h2{font-family:Georgia,serif;font-size:28px;}
+.result-right h2 .season{color:var(--coral);}
+.result-right p{font-size:13px;color:var(--muted);line-height:1.6;margin-top:8px;}
+.metric-row{display:flex;flex-direction:column;gap:14px;margin-top:8px;}
+.metric{}
+.metric-label{display:flex;justify-content:space-between;font-size:13px;font-weight:600;margin-bottom:6px;}
+.metric-label span:last-child{color:var(--coral);}
+.bar{height:8px;border-radius:99px;background:var(--line);overflow:hidden;}
+.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--rose-deep),var(--coral));border-radius:99px;}
+
+/* Color palette */
+.palette-row{margin-bottom:16px;}
+.palette-row h4{font-size:12px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:8px;}
+.swatches{display:flex;gap:8px;}
+.swatch{width:30px;height:30px;border-radius:8px;border:1px solid rgba(0,0,0,0.05);}
+
+/* ===== PRODUCTS PAGE ===== */
+.product-tabs{display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap;}
+.product-tab{
+  padding:9px 18px;border-radius:999px;font-size:13px;font-weight:600;
+  border:1px solid var(--line);background:#fff;cursor:pointer;color:var(--plum);
+}
+.product-tab.active{background:var(--coral);color:#fff;border-color:var(--coral);}
+.product-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;}
+.product-card{
+  background:#fff;border:1px solid var(--line);border-radius:16px;padding:16px;
+  display:flex;flex-direction:column;gap:10px;
+}
+.product-swatch{
+  height:80px;border-radius:12px;
+}
+.product-card h4{font-size:14px;}
+.product-card .brand{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;}
+.product-card .price{font-size:13px;font-weight:700;color:var(--coral);}
+.match-tag{
+  font-size:11px;font-weight:700;color:var(--sage);
+  background:#EEF3EB;padding:3px 10px;border-radius:999px;align-self:flex-start;
+}
+.product-actions{display:flex;gap:8px;margin-top:4px;}
+.btn-small{
+  flex:1;padding:8px;border-radius:8px;font-size:12px;font-weight:600;
+  border:1px solid var(--line);background:#fff;cursor:pointer;color:var(--plum);
+}
+.btn-small.primary{background:var(--coral);color:#fff;border-color:var(--coral);}
+.btn-small.active{background:var(--plum);color:#fff;border-color:var(--plum);}
+
+/* ===== COMPARISON PAGE ===== */
+.compare-empty{
+  text-align:center;padding:60px 20px;color:var(--muted);
+}
+.compare-grid{display:grid;gap:18px;}
+.compare-table{width:100%;border-collapse:collapse;margin-top:10px;}
+.compare-table th,.compare-table td{
+  text-align:left;padding:14px 16px;border-bottom:1px solid var(--line);font-size:13px;
+}
+.compare-table th{font-size:12px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);}
+.compare-table td.label{color:var(--muted);width:140px;}
+.compare-product-head{display:flex;align-items:center;gap:10px;}
+.compare-product-head .sw{width:32px;height:32px;border-radius:8px;}
+.remove-btn{
+  margin-left:auto;background:none;border:none;color:var(--muted);cursor:pointer;font-size:16px;
+}
+
+/* ===== EDUCATION PAGE ===== */
+.edu-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:18px;}
+.edu-card h3{font-family:Georgia,serif;font-size:18px;margin-bottom:8px;color:var(--coral);}
+.edu-card p{font-size:13px;color:var(--plum);line-height:1.7;}
+.edu-card .icon-circle{
+  width:46px;height:46px;border-radius:50%;background:var(--rose);
+  display:flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:14px;
+}
+
+@media(max-width:900px){
+  .sidebar{display:none;}
+  .analysis-layout,.edu-grid{grid-template-columns:1fr;}
+  .product-grid{grid-template-columns:repeat(2,1fr);}
+  .steps-grid{grid-template-columns:1fr;}
+  .home-hero{flex-direction:column;text-align:center;gap:24px;}
+  .home-hero h2{max-width:none;}
+}
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="logo">AI Beauty <span>Advisor</span></div>
+    <div class="tagline">AI analysis, beauty personalization</div>
+
+    <div class="nav-section-title">Explore</div>
+    <div class="nav-item active" data-page="home"><span class="dot"></span> Home</div>
+    <div class="nav-item" data-page="education"><span class="dot"></span> Learn the Basics</div>
+
+    <div class="nav-section-title">Your Analysis</div>
+    <div class="nav-item" data-page="upload"><span class="dot"></span> Upload Selfie</div>
+    <div class="nav-item" data-page="results"><span class="dot"></span> Analysis Result</div>
+
+    <div class="nav-section-title">Shop &amp; Compare</div>
+    <div class="nav-item" data-page="products"><span class="dot"></span> Recommended Products</div>
+    <div class="nav-item" data-page="compare"><span class="dot"></span> Compare Products</div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+
+    <!-- ============ HOME ============ -->
+    <div class="page active" id="page-home">
+      <div class="topbar">
+        <div>
+          <h1>Welcome back</h1>
+          <div class="sub">Discover the colors that were made for you</div>
+        </div>
+        <div class="avatar"></div>
+      </div>
+
+      <div class="home-hero">
+        <div>
+          <h2>Find your <em>personal color</em>, and the makeup that loves it back.</h2>
+          <p>Upload one selfie and our AI reads your skin tone, undertone, depth, chroma and contrast — then matches you to foundation, blush, eyeshadow and lip shades built for your coloring.</p>
+          <button class="btn-primary" data-goto="upload">Start My Analysis</button>
+          <button class="btn-outline" data-goto="education">How It Works</button>
+        </div>
+        <div class="hero-circle">Warm Spring<br>could be<br>your match</div>
+      </div>
+
+      <div class="grid steps-grid">
+        <div class="step-card">
+          <div class="step-num">STEP ONE</div>
+          <h3>Upload your selfie</h3>
+          <p>A clear, front-facing photo in natural light gives the AI the cleanest read of your skin's true color.</p>
+        </div>
+        <div class="step-card">
+          <div class="step-num">STEP TWO</div>
+          <h3>Get your personal color</h3>
+          <p>See your undertone, depth, chroma and contrast laid out simply — no jargon, just what it means for you.</p>
+        </div>
+        <div class="step-card">
+          <div class="step-num">STEP THREE</div>
+          <h3>Shop your shades</h3>
+          <p>Browse foundation, lip, blush and eyeshadow picks matched to your palette, and compare before you buy.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ UPLOAD ============ -->
+    <div class="page" id="page-upload">
+      <div class="topbar">
+        <div>
+          <h1>Upload Your Selfie</h1>
+          <div class="sub">One clear photo is all we need to start your analysis</div>
+        </div>
+        <div class="avatar"></div>
+      </div>
+
+      <div class="upload-wrap">
+        <label class="upload-box" id="uploadBox" for="fileInput">
+          <div class="upload-icon">📷</div>
+          <h3 id="uploadTitle">Drop your photo here, or click to browse</h3>
+          <p id="uploadSubtitle">JPG or PNG, front-facing, natural light works best</p>
+          <img id="previewImg" alt="Your uploaded selfie">
+        </label>
+        <input type="file" id="fileInput" class="fileinput" accept="image/*">
+
+        <button class="btn-primary" id="analyzeBtn" style="display:none;" data-goto="results">Analyze My Photo</button>
+
+        <div class="upload-tips">
+          <h4>For the best result</h4>
+          <ul>
+            <li>Face the camera directly, with hair pulled back</li>
+            <li>Use soft, natural daylight — avoid yellow indoor bulbs</li>
+            <li>Remove makeup or filters so your true tone shows</li>
+            <li>Keep a neutral expression and plain background</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ ANALYSIS RESULT ============ -->
+    <div class="page" id="page-results">
+      <div class="topbar">
+        <div>
+          <h1>Your Analysis Result</h1>
+          <div class="sub">Based on the photo you uploaded</div>
+        </div>
+        <div class="avatar"></div>
+      </div>
+
+      <div class="analysis-layout">
+        <div class="result-photo">
+          <img id="resultImg" src="" alt="Analyzed selfie" style="display:none;">
+          <span id="resultPlaceholder" style="color:var(--muted);font-size:13px;">Upload a selfie to see your photo here</span>
+        </div>
+
+        <div class="result-right">
+          <div class="card">
+            <div class="tone-badge">✦ AI Analysis Result</div>
+            <h2>Your personal color is<br><span class="season">Warm Spring</span></h2>
+            <p>Your skin runs warm with yellow-based undertones, paired with bright, clear coloring — you'll glow most in warm, vivid shades rather than cool or muted ones.</p>
+
+            <div class="metric-row">
+              <div class="metric">
+                <div class="metric-label"><span>Undertone — Warm</span><span>87%</span></div>
+                <div class="bar"><i style="width:87%"></i></div>
+              </div>
+              <div class="metric">
+                <div class="metric-label"><span>Depth — Light</span><span>61%</span></div>
+                <div class="bar"><i style="width:61%"></i></div>
+              </div>
+              <div class="metric">
+                <div class="metric-label"><span>Chroma — Bright</span><span>76%</span></div>
+                <div class="bar"><i style="width:76%"></i></div>
+              </div>
+              <div class="metric">
+                <div class="metric-label"><span>Contrast — Medium</span><span>69%</span></div>
+                <div class="bar"><i style="width:69%"></i></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="palette-row">
+              <h4>Best Tones For You</h4>
+              <div class="swatches">
+                <div class="swatch" style="background:#F6C9A0"></div>
+                <div class="swatch" style="background:#F2B28C"></div>
+                <div class="swatch" style="background:#EEDCA8"></div>
+                <div class="swatch" style="background:#E8A6A0"></div>
+                <div class="swatch" style="background:#D98B6D"></div>
+                <div class="swatch" style="background:#F4E1C6"></div>
+              </div>
+            </div>
+            <div class="palette-row">
+              <h4>Recommended Blush</h4>
+              <div class="swatches">
+                <div class="swatch" style="background:#F3A38B"></div>
+                <div class="swatch" style="background:#EE8E76"></div>
+                <div class="swatch" style="background:#F6BBA4"></div>
+              </div>
+            </div>
+            <div class="palette-row">
+              <h4>Recommended Eyeshadow</h4>
+              <div class="swatches">
+                <div class="swatch" style="background:#C9905B"></div>
+                <div class="swatch" style="background:#E3B98A"></div>
+                <div class="swatch" style="background:#A6764A"></div>
+              </div>
+            </div>
+            <div class="palette-row" style="margin-bottom:0;">
+              <h4>Recommended Lip Color</h4>
+              <div class="swatches">
+                <div class="swatch" style="background:#E2685A"></div>
+                <div class="swatch" style="background:#D14F45"></div>
+                <div class="swatch" style="background:#F08C7C"></div>
+              </div>
+            </div>
+          </div>
+
+          <button class="btn-primary" data-goto="products" style="width:100%;text-align:center;">See My Recommended Products</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ PRODUCTS ============ -->
+    <div class="page" id="page-products">
+      <div class="topbar">
+        <div>
+          <h1>Recommended For You</h1>
+          <div class="sub">Matched to your Warm Spring palette</div>
+        </div>
+        <div class="avatar"></div>
+      </div>
+
+      <div class="product-tabs">
+        <div class="product-tab active" data-cat="all">All</div>
+        <div class="product-tab" data-cat="foundation">Foundation</div>
+        <div class="product-tab" data-cat="lipstick">Lip Color</div>
+        <div class="product-tab" data-cat="blush">Blush</div>
+        <div class="product-tab" data-cat="eyeshadow">Eyeshadow</div>
+      </div>
+
+      <div class="product-grid" id="productGrid"></div>
+    </div>
+
+    <!-- ============ COMPARE ============ -->
+    <div class="page" id="page-compare">
+      <div class="topbar">
+        <div>
+          <h1>Compare Products</h1>
+          <div class="sub">Add up to 3 products from the recommendations page</div>
+        </div>
+        <div class="avatar"></div>
+      </div>
+
+      <div class="card">
+        <div id="compareEmpty" class="compare-empty">
+          <p>You haven't added any products to compare yet.<br>Go to <strong>Recommended Products</strong> and select "Compare" on items you're considering.</p>
+          <button class="btn-primary" data-goto="products" style="margin-top:18px;">Browse Products</button>
+        </div>
+        <div id="compareTableWrap" style="display:none; overflow-x:auto;">
+          <table class="compare-table" id="compareTable"></table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ EDUCATION ============ -->
+    <div class="page" id="page-education">
+      <div class="topbar">
+        <div>
+          <h1>Learn the Basics</h1>
+          <div class="sub">Simple explanations for the terms behind your results</div>
+        </div>
+        <div class="avatar"></div>
+      </div>
+
+      <div class="grid edu-grid">
+        <div class="card edu-card">
+          <div class="icon-circle">🎨</div>
+          <h3>Personal Color</h3>
+          <p>Your personal color is the family of shades that naturally complement your skin, hair and eyes. Wearing colors from your palette tends to make your complexion look brighter and more even — wearing colors outside it can wash you out or add shadows.</p>
+        </div>
+        <div class="card edu-card">
+          <div class="icon-circle">🌤️</div>
+          <h3>Undertone</h3>
+          <p>Undertone is the subtle color beneath your skin's surface — warm (yellow/golden), cool (pink/blue), or neutral (a mix of both). It doesn't change with a tan or season, and it's the biggest factor in whether gold or silver jewelry, and warm or cool makeup, suits you best.</p>
+        </div>
+        <div class="card edu-card">
+          <div class="icon-circle">🌗</div>
+          <h3>Depth</h3>
+          <p>Depth describes how light or dark your overall coloring is — your skin, hair and eyes together. Lighter depths usually suit softer, lighter shades, while deeper depths can carry richer, more saturated colors without being overwhelmed.</p>
+        </div>
+        <div class="card edu-card">
+          <div class="icon-circle">✨</div>
+          <h3>Chroma</h3>
+          <p>Chroma is how bright or muted a color appears. Some people look best in clear, vivid colors (high chroma), while others suit softer, dustier tones (low chroma) — wearing the wrong chroma can make a color look slightly "off" even if the hue itself is right.</p>
+        </div>
+        <div class="card edu-card">
+          <div class="icon-circle">⚖️</div>
+          <h3>Contrast</h3>
+          <p>Contrast is the difference in lightness between your hair, skin and eyes. High contrast (e.g. dark hair, light skin) suits bold, defined makeup and color combinations, while low contrast often looks best with softer, more blended tones.</p>
+        </div>
+        <div class="card edu-card">
+          <div class="icon-circle">🪞</div>
+          <h3>Why It Matters For Makeup</h3>
+          <p>Foundation should match your depth and undertone so it disappears into your skin. Blush, lips and eyeshadow look most natural when their chroma matches yours — bright if you're bright, soft if you're soft — so your whole face reads as one harmonious palette.</p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// ---------- NAVIGATION ----------
+const navItems = document.querySelectorAll('.nav-item');
+const pages = document.querySelectorAll('.page');
+
+function goToPage(name){
+  pages.forEach(p=>p.classList.remove('active'));
+  navItems.forEach(n=>n.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');
+  const nav = document.querySelector('.nav-item[data-page="'+name+'"]');
+  if(nav) nav.classList.add('active');
+  window.scrollTo(0,0);
+}
+
+navItems.forEach(item=>{
+  item.addEventListener('click', ()=> goToPage(item.dataset.page));
+});
+
+document.querySelectorAll('[data-goto]').forEach(btn=>{
+  btn.addEventListener('click', ()=> goToPage(btn.dataset.goto));
+});
+
+// ---------- UPLOAD ----------
+const fileInput = document.getElementById('fileInput');
+const previewImg = document.getElementById('previewImg');
+const uploadBox = document.getElementById('uploadBox');
+const uploadTitle = document.getElementById('uploadTitle');
+const uploadSubtitle = document.getElementById('uploadSubtitle');
+const analyzeBtn = document.getElementById('analyzeBtn');
+const resultImg = document.getElementById('resultImg');
+const resultPlaceholder = document.getElementById('resultPlaceholder');
+
+fileInput.addEventListener('change', (e)=>{
+  const file = e.target.files[0];
+  if(!file) return;
+  const url = URL.createObjectURL(file);
+  previewImg.src = url;
+  previewImg.style.display = 'block';
+  uploadBox.classList.add('has-image');
+  uploadTitle.style.display = 'none';
+  uploadSubtitle.style.display = 'none';
+  analyzeBtn.style.display = 'inline-block';
+
+  resultImg.src = url;
+  resultImg.style.display = 'block';
+  resultPlaceholder.style.display = 'none';
+});
+
+// ---------- PRODUCTS ----------
+const products = [
+  {cat:'foundation', name:'Velvet Skin Foundation', brand:'Lumière Beauty', shade:'Warm Ivory', price:'$32', color:'#F1C9A6', match:96},
+  {cat:'foundation', name:'Soft Focus Tint', brand:'Aria Cosmetics', shade:'Golden Light', price:'$28', color:'#EFC09A', match:91},
+  {cat:'foundation', name:'Glow Base SPF20', brand:'Petalwear', shade:'Honey Beige', price:'$24', color:'#E8B98E', match:88},
+  {cat:'foundation', name:'Sheer Skin Veil', brand:'Lumière Beauty', shade:'Warm Sand', price:'$30', color:'#F3CCA8', match:85},
+
+  {cat:'blush', name:'Cream Cheek Tint', brand:'Petalwear', shade:'Peach Coral', price:'$18', color:'#F3A38B', match:97},
+  {cat:'blush', name:'Powder Flush Duo', brand:'Aria Cosmetics', shade:'Apricot Glow', price:'$22', color:'#EE8E76', match:93},
+  {cat:'blush', name:'Liquid Blush Drop', brand:'Lumière Beauty', shade:'Sunset Pink', price:'$20', color:'#F6BBA4', match:90},
+  {cat:'blush', name:'Glow Stick Blush', brand:'Petalwear', shade:'Coral Bloom', price:'$19', color:'#F09483', match:86},
+
+  {cat:'eyeshadow', name:'Warm Tones Palette', brand:'Aria Cosmetics', shade:'Apricot Brown', price:'$36', color:'#C9905B', match:95},
+  {cat:'eyeshadow', name:'Single Pan Shadow', brand:'Lumière Beauty', shade:'Golden Honey', price:'$14', color:'#E3B98A', match:92},
+  {cat:'eyeshadow', name:'Matte Quad', brand:'Petalwear', shade:'Cocoa Spice', price:'$26', color:'#A6764A', match:88},
+  {cat:'eyeshadow', name:'Shimmer Duo', brand:'Aria Cosmetics', shade:'Champagne Glow', price:'$21', color:'#E8CFA0', match:84},
+
+  {cat:'lipstick', name:'Satin Lip Color', brand:'Lumière Beauty', shade:'Coral Pink', price:'$23', color:'#E2685A', match:98},
+  {cat:'lipstick', name:'Velvet Matte Lip', brand:'Petalwear', shade:'Spiced Red', price:'$25', color:'#D14F45', match:90},
+  {cat:'lipstick', name:'Sheer Tint Balm', brand:'Aria Cosmetics', shade:'Peach Blossom', price:'$16', color:'#F08C7C', match:89},
+  {cat:'lipstick', name:'Glossy Lip Oil', brand:'Lumière Beauty', shade:'Warm Berry', price:'$19', color:'#E0716B', match:83},
+];
+
+const compareList = []; // store product objects (max 3)
+
+const productGrid = document.getElementById('productGrid');
+const catNames = {foundation:'Foundation', blush:'Blush', eyeshadow:'Eyeshadow', lipstick:'Lip Color'};
+
+function renderProducts(filter='all'){
+  productGrid.innerHTML = '';
+  products.filter(p=> filter==='all' || p.cat===filter).forEach((p, idx)=>{
+    const card = document.createElement('div');
+    card.className = 'product-card';
+    const inCompare = compareList.includes(p);
+    card.innerHTML = `
+      <div class="product-swatch" style="background:${p.color}"></div>
+      <div class="match-tag">${p.match}% match</div>
+      <div>
+        <div class="brand">${p.brand} · ${catNames[p.cat]}</div>
+        <h4>${p.name}</h4>
+        <div style="font-size:12px;color:var(--muted);margin-top:2px;">Shade: ${p.shade}</div>
+      </div>
+      <div class="price">${p.price}</div>
+      <div class="product-actions">
+        <button class="btn-small primary" data-look="${p.name}">Try Look</button>
+        <button class="btn-small ${inCompare?'active':''}" data-compare="${p.name}">${inCompare?'Added ✓':'Compare'}</button>
+      </div>
+    `;
+    productGrid.appendChild(card);
+
+    card.querySelector('[data-look]').addEventListener('click', ()=>{
+      alert('Virtual try-on preview for "'+p.name+'" would open here.');
+    });
+    card.querySelector('[data-compare]').addEventListener('click', (e)=>{
+      toggleCompare(p);
+      renderProducts(currentFilter);
+    });
+  });
+}
+
+let currentFilter = 'all';
+document.querySelectorAll('.product-tab').forEach(tab=>{
+  tab.addEventListener('click', ()=>{
+    document.querySelectorAll('.product-tab').forEach(t=>t.classList.remove('active'));
+    tab.classList.add('active');
+    currentFilter = tab.dataset.cat;
+    renderProducts(currentFilter);
+  });
+});
+
+function toggleCompare(p){
+  const idx = compareList.indexOf(p);
+  if(idx > -1){
+    compareList.splice(idx,1);
+  } else {
+    if(compareList.length >= 3){
+      alert('You can compare up to 3 products at a time. Remove one first.');
+      return;
+    }
+    compareList.push(p);
+  }
+  renderCompare();
+}
+
+// ---------- COMPARE ----------
+const compareEmpty = document.getElementById('compareEmpty');
+const compareTableWrap = document.getElementById('compareTableWrap');
+const compareTable = document.getElementById('compareTable');
+
+function renderCompare(){
+  if(compareList.length === 0){
+    compareEmpty.style.display = 'block';
+    compareTableWrap.style.display = 'none';
+    return;
+  }
+  compareEmpty.style.display = 'none';
+  compareTableWrap.style.display = 'block';
+
+  let head = '<tr><th>&nbsp;</th>';
+  compareList.forEach(p=>{
+    head += `<th>
+      <div class="compare-product-head">
+        <div class="sw" style="background:${p.color}"></div>
+        <div>${p.name}</div>
+        <button class="remove-btn" data-remove="${p.name}" title="Remove">✕</button>
+      </div>
+    </th>`;
+  });
+  head += '</tr>';
+
+  const rows = [
+    ['Brand', p=>p.brand],
+    ['Category', p=>catNames[p.cat]],
+    ['Shade', p=>p.shade],
+    ['Price', p=>p.price],
+    ['Match Score', p=>p.match+'% match'],
+    ['Color', p=>`<div class="sw" style="background:${p.color};width:24px;height:24px;border-radius:6px;display:inline-block;"></div>`],
+  ];
+
+  let body = '';
+  rows.forEach(([label, fn])=>{
+    body += `<tr><td class="label">${label}</td>`;
+    compareList.forEach(p=> body += `<td>${fn(p)}</td>`);
+    body += '</tr>';
+  });
+
+  compareTable.innerHTML = head + body;
+
+  compareTable.querySelectorAll('[data-remove]').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const name = btn.dataset.remove;
+      const p = compareList.find(x=>x.name===name);
+      if(p) toggleCompare(p);
+      renderProducts(currentFilter);
+    });
+  });
+}
+
+// init
+renderProducts('all');
+renderCompare();
+</script>
+
+</body>
+</html>

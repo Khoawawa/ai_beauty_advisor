@@ -32,6 +32,29 @@ class Chroma(Enum):
     MEDIUM = "Medium"
     BRIGHT = "Clear / Bright"
 
+SEASON_MAP = {
+    # (Undertone-group, Depth, Chroma, Contrast)
+    # Springs - Warm + Clear
+    (Undertone.WARM,         Depth.LIGHT,  Chroma.BRIGHT,  Contrast.LOW):    "Light Spring",
+    (Undertone.WARM,         Depth.MEDIUM, Chroma.BRIGHT,  Contrast.MEDIUM): "True Spring",
+    (Undertone.NEUTRAL_WARM, Depth.MEDIUM, Chroma.BRIGHT,  Contrast.HIGH):   "Bright Spring",
+
+    # Summers - Cool + Muted
+    (Undertone.COOL,         Depth.LIGHT,  Chroma.MUTED,   Contrast.LOW):    "Light Summer",
+    (Undertone.COOL,         Depth.MEDIUM, Chroma.MUTED,   Contrast.LOW):    "True Summer",
+    (Undertone.NEUTRAL_COOL, Depth.MEDIUM, Chroma.MUTED,   Contrast.LOW):    "Soft Summer",
+
+    # Autumns - Warm + Muted
+    (Undertone.NEUTRAL_WARM, Depth.MEDIUM, Chroma.MUTED,   Contrast.LOW):    "Soft Autumn",
+    (Undertone.WARM,         Depth.MEDIUM, Chroma.MUTED,   Contrast.MEDIUM): "True Autumn",
+    (Undertone.WARM,         Depth.DEEP,   Chroma.MEDIUM,  Contrast.HIGH):   "Deep Autumn",
+
+    # Winters - Cool + Clear
+    (Undertone.COOL,         Depth.DEEP,   Chroma.BRIGHT,  Contrast.HIGH):   "True Winter",
+    (Undertone.NEUTRAL,      Depth.DEEP,   Chroma.BRIGHT,  Contrast.HIGH):   "Deep Winter",
+    (Undertone.NEUTRAL_COOL, Depth.MEDIUM, Chroma.BRIGHT,  Contrast.HIGH):   "Bright Winter",
+}
+
 def classify_skintone(l_star: float) -> Skintone:
     if l_star > 75: return Skintone.VERY_LIGHT
     if l_star >= 68: return Skintone.LIGHT
@@ -93,15 +116,75 @@ def apply_sclera_white_balance(raw_image: np.ndarray, parsing_mask: np.ndarray, 
     return cv2.merge((b_corr, g_corr, r_corr)).astype(np.uint8)
 
 def analyze_personal_color(image_bgr: np.ndarray, engine) -> dict:
+    stat = get_stat(image_bgr, engine)
+    print("This work")
+    
+    undertone_enum = next(u for u in Undertone if u.value == stat["undertone"])
+    depth_enum     = next(d for d in Depth     if d.value == stat["depth"])
+    chroma_enum    = next(c for c in Chroma    if c.value == stat["chroma"])
+    contrast_enum  = next(c for c in Contrast  if c.value == stat["contrast"])
+
+    season = get_personal_color(undertone_enum, depth_enum, chroma_enum, contrast_enum)
+    print("this work too")
+    return {
+        **stat,
+        "personal_color": season,
+    }
+def get_personal_color(undertone: Undertone, depth: Depth, chroma: Chroma, contrast: Contrast) -> str:
+    # 1. Try exact match first
+    key = (undertone, depth, chroma, contrast)
+    if key in SEASON_MAP:
+        return SEASON_MAP[key]
+
+    # 2. Score each season by how many dimensions match
+    UNDERTONE_WARM  = {Undertone.WARM, Undertone.NEUTRAL_WARM}
+    UNDERTONE_COOL  = {Undertone.COOL, Undertone.NEUTRAL_COOL}
+    UNDERTONE_NEUT  = {Undertone.NEUTRAL}
+
+    SEASON_PROFILES = {
+        "Light Spring":   (UNDERTONE_WARM, Depth.LIGHT,  Chroma.BRIGHT,  Contrast.LOW),
+        "True Spring":    (UNDERTONE_WARM, Depth.MEDIUM, Chroma.BRIGHT,  Contrast.MEDIUM),
+        "Bright Spring":  (UNDERTONE_WARM | UNDERTONE_NEUT, Depth.MEDIUM, Chroma.BRIGHT, Contrast.HIGH),
+        "Light Summer":   (UNDERTONE_COOL, Depth.LIGHT,  Chroma.MUTED,   Contrast.LOW),
+        "True Summer":    (UNDERTONE_COOL, Depth.MEDIUM, Chroma.MUTED,   Contrast.LOW),
+        "Soft Summer":    (UNDERTONE_COOL | UNDERTONE_NEUT, Depth.MEDIUM, Chroma.MUTED, Contrast.LOW),
+        "Soft Autumn":    (UNDERTONE_WARM | UNDERTONE_NEUT, Depth.MEDIUM, Chroma.MUTED, Contrast.LOW),
+        "True Autumn":    (UNDERTONE_WARM, Depth.MEDIUM, Chroma.MUTED,   Contrast.MEDIUM),
+        "Deep Autumn":    (UNDERTONE_WARM, Depth.DEEP,   Chroma.MEDIUM,  Contrast.HIGH),
+        "True Winter":    (UNDERTONE_COOL, Depth.DEEP,   Chroma.BRIGHT,  Contrast.HIGH),
+        "Deep Winter":    (UNDERTONE_COOL | UNDERTONE_NEUT, Depth.DEEP,  Chroma.BRIGHT, Contrast.HIGH),
+        "Bright Winter":  (UNDERTONE_COOL | UNDERTONE_NEUT, Depth.MEDIUM, Chroma.BRIGHT, Contrast.HIGH),
+    }
+
+    best_season, best_score = "True Spring", -1
+    for season, (ut_set, dep, chr_, con) in SEASON_PROFILES.items():
+        score = 0
+        score += 3 if undertone in ut_set else 0   # undertone weighted most
+        score += 2 if depth == dep else 0
+        score += 2 if chroma == chr_ else 0
+        score += 1 if contrast == con else 0
+        if score > best_score:
+            best_score, best_season = score, season
+
+    return best_season
+def apply_gray_world(image_bgr: np.ndarray) -> np.ndarray:
+    b, g, r = cv2.split(image_bgr.astype(np.float32))
+    b_mean, g_mean, r_mean = np.mean(b), np.mean(g), np.mean(r)
+    gray = (b_mean + g_mean + r_mean) / 3
+    b = np.clip(b * (gray / b_mean), 0, 255)
+    g = np.clip(g * (gray / g_mean), 0, 255)
+    r = np.clip(r * (gray / r_mean), 0, 255)
+    return cv2.merge((b, g, r)).astype(np.uint8)
+def get_stat(image_bgr: np.ndarray, engine) -> dict:
 
     
     mask = engine.predict(image_bgr) 
     
     # 2. Lighting Correction
-    corrected_image = apply_sclera_white_balance(image_bgr, mask, eye_classes=[4, 5])
+    corrected = apply_gray_world(image_bgr)
     
     # 3. Convert to Scientific CIELAB Space
-    lab_image = cv2.cvtColor(corrected_image, cv2.COLOR_BGR2Lab)
+    lab_image = cv2.cvtColor(corrected, cv2.COLOR_BGR2Lab)
     l_chan, a_chan, b_chan = cv2.split(lab_image.astype(np.float32))
     
     real_l = (l_chan * 100.0) / 255.0
@@ -137,7 +220,7 @@ def analyze_personal_color(image_bgr: np.ndarray, engine) -> dict:
         "contrast": classify_contrast(sl, hl).value,
         "depth": classify_depth(sl, hl, el).value,
         "chroma": classify_chroma(sc, lc).value,
-        "raw_data": {
-            "skin_L": round(sl, 2), "skin_a": round(sa, 2), "skin_b": round(sb, 2)
-        }
+        # "raw_data": {
+        #     "skin_L": round(sl, 2), "skin_a": round(sa, 2), "skin_b": round(sb, 2)
+        # }
     }

@@ -1,10 +1,11 @@
 from fastapi import APIRouter, Response, UploadFile, File, HTTPException, Request
 from fastapi.responses import JSONResponse
+from core.analysis import analyze_personal_color
 import cv2
 import numpy as np
+import traceback
 
 router = APIRouter()
-
 @router.post("/parse-face")
 async def parse_face(request: Request, file: UploadFile = File(...)):
     if not file.filename:
@@ -19,21 +20,18 @@ async def parse_face(request: Request, file: UploadFile = File(...)):
 
         if cv2_image is None:
             raise HTTPException(status_code=400, detail="Invalid image file")
+        print(cv2_image.shape)
+        stat = analyze_personal_color(cv2_image, engine)
         
-        mask = engine.predict(cv2_image)
-        # separate mask
-        skin_mask = (mask == 1).astype(np.uint8) * 255
-        facial_mask = (~np.isin(mask,[0,12])).astype(np.uint8) * 255
-        # nose_mask = (mask == 2).astype(np.uint8) * 255
-        # lip_mask = np.isin(mask, [3, 4]).astype(np.uint8) * 255
-        # hair_mask = (mask == 5).astype(np.uint8) * 255
-        # eye_mask = np.isin(mask, [6, 7]).astype(np.uint8) * 255
+        return JSONResponse(content={
+            "personal_color": stat["personal_color"],
+            "skintone":       stat["skintone"],
+            "undertone":      stat["undertone"],
+            "contrast":       stat["contrast"],
+            "depth":          stat["depth"],
+            "chroma":         stat["chroma"],
+            # "raw_data":       stat["raw_data"],
+        })
 
-        success, encoded_mask = cv2.imencode('.png', mask)
-        if not success:
-            raise ValueError("Failed to encode mask image")
-        
-        return Response(content=encoded_mask.tobytes(), media_type="image/png")
-    
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=traceback.format_exc())
