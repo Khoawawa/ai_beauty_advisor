@@ -127,7 +127,7 @@ export default function App() {
     const formData = new FormData();
     formData.append("file", selectedFile);
 
-    const response = await fetch("https://khoawawa-beauty-backend.hf.space/parse-face", {
+    const response = await fetch("https://khoawawa-beauty-backend.hf.space/api/v1/parse-face", {
       method: "POST",
       body: formData,
     });

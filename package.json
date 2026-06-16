@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
-  "homepage": "https://Khoawawa.github.io/ai_beauty_advisor/",
+  "homepage": "https://khoawawa.github.io/ai_beauty_advisor/",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
