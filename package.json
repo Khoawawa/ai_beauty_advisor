@@ -10,7 +10,7 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "predeploy": "npm run build",
-    "deploy": "gh-pages -d dist -r https://github.com/Khoawawa/ai_beauty_advisor.git"
+    "deploy": "gh-pages -d dist -r https://github.com/Khoawawa/ai_beauty_advisor.git --no-history"
   },
   "dependencies": {
     "react": "^19.2.6",
